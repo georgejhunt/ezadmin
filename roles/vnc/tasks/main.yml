@@ -1,0 +1,55 @@
+- name: Install vnc packages
+  yum: name={{ item }}
+       state=present
+  with_items:
+        - tigervnc-server
+
+- name: Install the systemd unit file
+  template: backup=yes
+            dest=/etc/systemd/system/vncserver\@.service
+            src=vncserver\@.service
+            owner=root
+            mode=0644
+
+
+- name: Install the config file for vnc
+  template: backup=yes
+            dest=/home/setup/.vnc/xstartup
+            src=xstartup
+            owner={{ weakuser }}
+            mode=0644
+
+- name: create a vncpassword for the weakuser
+  shell: "echo {{ weakpw }} |  /bin/vncpasswd -f > /home/{{ weakuser }}/.vnc/passwd"
+
+- name: Enable vnc service
+  service: name=vncserver\@.service
+           enabled=yes
+           state=started
+  
+- name: Configure sshd to tunnel X11 conversations
+  lineinfile: backup=yes
+              dest=/etc/ssh/sshd_config
+              regexp='^X11Forwarding'
+              line='X11Forwarding yes'
+              state=present
+
+
+  lineinfile: backup=no
+              dest=/etc/ssh/sshd_config
+              regexp='^X11DisplayOffset'
+              line='X11DisplayOffset 10'
+              state=present
+
+  lineinfile: backup=no
+              dest=/etc/ssh/sshd_config
+              regexp='^X11UseLocalhost'
+              line='X11UseLocalhost yes'
+              state=present
+
+  lineinfile: backup=no
+              dest=/etc/ssh/sshd_config
+              regexp='^AllowTcpForwarding'
+              line='AllowTcpForwarding yes'
+              state=present
+

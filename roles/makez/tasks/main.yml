@@ -1,0 +1,13 @@
+- name: Install useful packages
+  yum: name={{ item }}
+       state=present
+  with_items:
+        - vim-X11
+        - vim-enhanced
+
+- name: Install administrative profile with useful shortcuts
+  template: backup=yes
+            dest=/etc/profile.d/bashrc_xs.sh
+            src=bashrc_xs.sh
+            owner=root
+            mode=0644

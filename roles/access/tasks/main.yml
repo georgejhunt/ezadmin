@@ -1,0 +1,6 @@
+- name: Create a non privleged user 
+  user: name={{ weakuser }}
+        generate_ssh_key=yes
+
+- name: Add a password for this user
+  shell: "echo {{ weakpw }} | /bin/passwd {{ weakuser }} --stdin" 
