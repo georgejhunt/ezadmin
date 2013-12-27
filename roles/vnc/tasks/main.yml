@@ -17,15 +17,16 @@
             dest=/home/setup/.vnc/xstartup
             src=xstartup
             owner={{ weakuser }}
-            mode=0644
+            mode=0755
 
 - name: create a vncpassword for the weakuser
   shell: "echo {{ weakpw }} |  /bin/vncpasswd -f > /home/{{ weakuser }}/.vnc/passwd"
 
 - name: Enable vnc service
-  service: name=vncserver\@.service
-           enabled=yes
-           state=started
+  shell: 'systemctl enable vncserver\@\:1.service'
+
+- name: Start the vnc service
+  shell: 'systemctl restart vncserver\@\:1.service'
   
 - name: Configure sshd to tunnel X11 conversations
   lineinfile: backup=yes
