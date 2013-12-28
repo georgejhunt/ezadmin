@@ -4,6 +4,9 @@
   with_items:
         - tigervnc-server
 
+- name: Install the XFCE lightweight desktop for use with VNC
+  shell: 'yum -y groupinstall XFCE'
+
 - name: Install the systemd unit file
   template: backup=yes
             dest=/etc/systemd/system/vncserver\@.service
@@ -19,15 +22,40 @@
             owner={{ weakuser }}
             mode=0755
 
+- name: Create XFCE panel config directory
+  file: path==/home/{{ weakuser }}/.config/xfce4/xfconf/xfce-perchannel-xml/
+        state=directory
+        owner={{ weakuser }}
+        mode=0755
+        group=root
+
+- name: Add config file for XFCE so startup panel config does not occur
+  template: src=xfce4-panel.xml
+            dest=/home/{{ weakuser }}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-panel.xml
+            owner={{ weakuser }}
+            group=root
+            mode=0644
+
+#- name: Turn off the screensaver
+#  shell: "su -c '/usr/bin/xfconf-query -c xfce4-session -n -t bool -p /startup/screensaver/enabled -s false' {{ weakuser }}"
+
 - name: create a vncpassword for the weakuser
   shell: "echo {{ weakpw }} |  /bin/vncpasswd -f > /home/{{ weakuser }}/.vnc/passwd"
 
-- name: Enable vnc service
-  shell: 'systemctl enable vncserver\@\:1.service'
+# don't turn on vnc as a default service -- since it takes about 100MB memory
+#- name: Enable vnc service
+#  shell: 'systemctl enable vncserver\@\:1.service'
 
-- name: Start the vnc service
-  shell: 'systemctl restart vncserver\@\:1.service'
+#- name: Start the vnc service
+#  shell: 'systemctl restart vncserver\@\:1.service'
   
+- name: Put a script to turn on vnc as needed
+  template: src=xs-vnc.j2
+            dest=/usr/bin/xs-vnc
+            mode=0755
+            owner=root
+            group=root
+
 - name: Configure sshd to tunnel X11 conversations
   lineinfile: backup=yes
               dest=/etc/ssh/sshd_config

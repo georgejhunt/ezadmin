@@ -11,3 +11,9 @@
             src=bashrc_xs.sh
             owner=root
             mode=0644
+
+- name: Add systemwide alias for enhanced vim in text mode (enables clipboard)
+  lineinfile: dest=/etc/profile.d/bashrc_xs.sh
+              regexp='^alias v='
+              line='alias vi="gvim -v "'
+              state=present

@@ -1,0 +1,14 @@
+#!/bin/bash
+# script to start up vnc on an ad hoc basis
+
+if [ $# -eq 0 ]; then
+  echo "Use 'xs-vnc off' to reclaim the 100MB of RAM for normal server functions"
+  /bin/sh -c '/usr/bin/vncserver -kill :1 > /dev/null 2>&1 || :'
+  /sbin/runuser -l {{ weakuser }} -c "/usr/bin/vncserver :1"
+  echo "Total memory used after starting VNC:`cat /proc/meminfo | grep MemFree`"
+else
+if [ "$1" == "off" ];then
+  /bin/sh -c '/usr/bin/vncserver -kill :1 > /dev/null 2>&1 || :'
+  echo `cat /proc/meminfo | grep MemFree`
+fi
+fi

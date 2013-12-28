@@ -4,3 +4,24 @@
 
 - name: Add a password for this user
   shell: "echo {{ weakpw }} | /bin/passwd {{ weakuser }} --stdin" 
+
+- name:  Cause the user password to expire in 10 days
+  shell: chage -M 10 -W 10 {{ weakuser }}
+
+- name: Put a password change nag into the access users' .bashrc file
+  template: backup=yes
+            src=bashrc.j2
+            dest=/home/{{ weakuser }}/.bashrc
+            owner={{ weakuser }}
+            mode=0700
+
+- name: Remove the hidden file that disables password nag
+  file: dest=/home/{{ weakuser }}/.disable_pw_nag
+        state=absent
+
+- name: Drop in a script to disable password nag, and further password changes
+  template: src=xs-password-forever.j2
+            dest=/usr/bin/xs-password-forever
+            owner=root
+            group=root
+            mode=0755
