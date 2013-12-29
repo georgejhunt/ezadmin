@@ -1,0 +1,20 @@
+#!/bin/bash
+# check the wan connectivity
+
+# first make sure the date is set correctly
+#ntpd 0.us.pool/ntp.org
+
+ping -c 2 -i 5 8.8.8.8
+if [ $? -ne "0" ]; then
+	killall wvdial
+	sleep 10
+	wvdial &
+fi
+
+# try to start up the vpn
+#ps -e | grep openvpn
+ping -c 3 -i 5 5.5.0.1
+if [ $? -ne "0" ]; then
+	/etc/rc.d/firewall-ppp
+	/etc/rc.d/vpnstart
+fi

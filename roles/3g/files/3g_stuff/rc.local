@@ -1,0 +1,22 @@
+#!/bin/bash
+# these scripts are executed at start up by root
+
+# wait for modem devices to be set up
+sleep 90
+
+# test that it is ever executed
+#touch /home/olpc/relocal.executed
+
+# startup the wan
+/etc/rc.d/wanstart &
+
+# set up proxy and masquerade
+/etc/rc.d/firewall-ppp
+
+# check vpn pipe
+#/etc/rc.d/vpnstart &
+
+
+# start the vnstat daemon
+vnstatd -d
+

@@ -9,3 +9,4 @@
       - { role: access, tags: ['access'] }
       - { role: vnc, tags: ['vnc'] }
       - { role: openvpn, tags: ['openvpn'] }
+      - { role: 3g, tags: ['3g'] }

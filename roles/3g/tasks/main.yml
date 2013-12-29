@@ -1,0 +1,9 @@
+- name: Install modem manager packages
+  yum: name={{ item }}
+       state=present
+  with_items:
+       - ModemManager
+
+- name: Copy some useful files
+  copy: src=3g_stuff
+        dest=/root/

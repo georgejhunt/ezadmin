@@ -5,6 +5,9 @@
         - vim-X11
         - vim-enhanced
 
+- name: Disable selinux -- always seems to get in the way
+  selinux: state=disabled
+`
 - name: Install administrative profile with useful shortcuts
   template: backup=yes
             dest=/etc/profile.d/bashrc_xs.sh

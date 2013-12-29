@@ -1,0 +1,7 @@
+lock
+defaultroute
+#noauth
+#debug
+crtscts
+passive
+asyncmap 0
