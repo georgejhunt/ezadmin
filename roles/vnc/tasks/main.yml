@@ -14,6 +14,11 @@
             owner=root
             mode=0644
 
+- name: Create vnc config directory
+  file: dest=/home/{{ weakuser }}/.vnc
+        state=directory
+        owner={{ weakuser }}
+        mode=0755
 
 - name: Install the config file for vnc
   template: backup=yes
@@ -23,7 +28,7 @@
             mode=0755
 
 - name: Create XFCE panel config directory
-  file: path==/home/{{ weakuser }}/.config/xfce4/xfconf/xfce-perchannel-xml/
+  file: path=/home/{{ weakuser }}/.config/xfce4/xfconf/xfce-perchannel-xml/
         state=directory
         owner={{ weakuser }}
         mode=0755
