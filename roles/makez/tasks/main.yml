@@ -5,6 +5,7 @@
         - vim-X11
         - vim-enhanced
         - firefox
+        - gedit
 
 - name: Disable selinux -- always seems to get in the way
   selinux: state=disabled
