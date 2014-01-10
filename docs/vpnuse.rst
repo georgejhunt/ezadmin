@@ -12,9 +12,13 @@ CAUTION: Since the XSCE has enabled passwords for ssh conversations, and has cre
 A more secure approach would be to turn off password authentication completely, and use ssh_keygen to create your own set of public/private keys for use with your deployment and machines.
 
 By default, the vpn software is loaded on the machine, but not activated.   To work as a communication path, the openvpn tunnel must be turned on. The vpn tunnel is controlled by the following commands::
+
  *xs-vpn test
+
  *xs-vpn on
+
  *xs-vpn status
+
  *xs-vpn off
 
 "xs-vpn test" will start up the vpn tunnel. The intention was to have the "xs-vpn on" issue a warning it it discovers that password authentication is being used, and to suggest that public/private keys be used in stead. (It was discovered late in the QA cycle that this error message ins not issued). It will be corrected for the next release.
