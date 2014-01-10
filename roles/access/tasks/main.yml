@@ -1,3 +1,10 @@
+- name: Install textmode remote access packages
+  yum: name={{ item }}
+       state=present
+  with_items:
+        - screen
+	- lynx
+
 - name: Create a non privleged user 
   user: name={{ weakuser }}
         generate_ssh_key=yes
