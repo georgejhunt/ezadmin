@@ -11,7 +11,7 @@ CAUTION: Since the XSCE has enabled passwords for ssh conversations, and has cre
 
 A more secure approach would be to turn off password authentication completely, and use ssh_keygen to create your own set of public/private keys for use with your deployment and machines.
 
-By default, the vpn software is loaded on the machine, but not activated.   To work as a communication path, the openvpn tunnel must be turned on. The vpn tunnel is controlled by the following commands::
+By default, the vpn software is loaded on the machine, but not activated.   To work as a communication path, the openvpn tunnel must be turned on. The vpn tunnel is controlled by the following commands:
 
  *xs-vpn test
 
