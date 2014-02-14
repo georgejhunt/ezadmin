@@ -3,7 +3,7 @@
        state=present
   with_items:
         - screen
-	- lynx
+        - lynx
 
 - name: Create a non privleged user 
   user: name={{ weakuser }}
