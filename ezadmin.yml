@@ -5,7 +5,7 @@
     - weakuser: setup
     - weakpw: 12setup
   roles:
-      - { role: makez, tags: ['makez'] }
+#      - { role: makez, tags: ['makez'] }
       - { role: access, tags: ['access'] }
       - { role: vnc, tags: ['vnc'] }
       - { role: openvpn, tags: ['openvpn'] }
