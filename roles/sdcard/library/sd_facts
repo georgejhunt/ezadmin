@@ -1,0 +1,33 @@
+#!/bin/bash
+# get info about any sd card present
+# initialize variables
+
+set -x -e
+MMCPATH=
+MMCFILES=
+MMCFSTYPE=
+MMCSWP=
+MMCDEV=`mount | grep mmcblk |gawk '{print $1}'`
+if [ -z "$MMCBLK" ];then
+    MMCPATH=`mount | grep mmcblk | gawk '{print $3}'`
+    MMCFILES=`find "$MMCPATH" | wc | gawk '{print $1}'`
+    MMCFSTYPE=`mount | grep mmcblk |gawk '{print $5}'`
+    if [ -e "$MMCPATH/swap.img" ];then
+	MMCSWP="swap.img"
+    fi
+fi
+cat << EOF
+{
+    "changed": false,
+    "ansible_facts": {
+        "sd_facts_gathered": true,
+        "sd_dev": "$MMCDEV",
+        "sd_path" : "$MMCPATH",
+        "sd_files": "$MMCFILES",
+        "sd_fstype": "$MMCFSTYPE",
+	"sd_swap_file": "$MMCSWP"
+    }
+}
+EOF
+
+

@@ -1,0 +1,32 @@
+#!/bin/bash
+# install from the current tree all dependencies for AC line recorder on XO1
+FEDORA=`rpm -q fedora-release|gawk 'BEGIN {FS="-";}{print $3}'`
+XSARCH=`uname -i`
+
+# during debug phase, see a trail, stop on error, stop on use of empty variable
+set -x -e -u
+
+# Make sure only root can run our script
+if [ "$(id -u)" != "0" ]; then
+    echo "This script must be run as root" 1>&2
+    exit 1
+fi
+
+# determine directory of install package
+installdir=$(cd `dirname ${0}`; pwd)
+
+# create a temp file which points to our local repo
+			cat << EOF > /tmp/yum.conf
+[local]
+name=local
+baseurl=file://$installdir/localrepo
+enabled=1
+gpgcheck=0
+cost=100
+EOF
+
+yum --disablerepo=* --enablerepo=local -c file:///tmp/yum.conf -y install ansible 
+
+# now that we have ansible, we can let that configure the rest of the system
+
+$installdir/runansible

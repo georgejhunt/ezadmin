@@ -1,0 +1,42 @@
+- name: make sure we have sd facts
+  sd_facts: facts=true
+
+- name: If there is no device, fail
+  fail: msg="No SD card was discovered, or format unrecognizable"
+  when:  sd_fstype  is not defined
+
+- name: Don't proceed if there is any data on the SD card
+  fail: msg="The SD card has data. Please remove the data (rm <card path> -rf) and try again"
+  when:  "{{ sd_files }} > 1"
+
+- name: Need to umount the fs so we can repartition
+  shell: umount {{ sd_path }}
+
+- name: create an ext4 filesystem on the SD card
+  filesystem: dev={{ sd_dev }} fstype=ext4 force=yes opts="-L library"
+
+- name: make sure we have a place to put the new SD card
+  file: path=/library
+        state=directory
+
+- name: mount the newly formatted SD at /library
+  mount: name=/library
+         src={{ sd_dev }}
+         state=mounted
+         fstype={{ sd_preferred_fs }}
+
+- name: create a swap file if wanted
+  shell: "{{ item }}"
+  with_items:
+     - dd if=/dev/zero of=/library/swap.img bs=1024 count=524288
+     - mkswap /library/swap.img
+     - chown root:root /library/swap.img
+     - swapon /library/swap.img
+  when: sd_swap and sd_swap_file is not defined 
+
+- name: Put an entry into fstab, so that swap starts at startup
+  lineinfile:
+        dest=/etc/fstab
+        line='/library/swap.img swap swap  defaults 0 0'
+  when: sd_swap
+

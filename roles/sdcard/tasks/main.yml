@@ -1,0 +1,21 @@
+# There are sdcard/defaults/main.yml vars which config these actions
+- name: what kind of XO are we dealing with
+  xo_type_facts: facts=true
+
+- name: make sure we have sd facts
+  sd_facts: 
+  when: sd_dev is not defined
+- debug: var=[sd_required,sd_fstype]
+
+- name: indicate no SD card, or format not recognized
+  fail: msg="There is no SD card, or format is not recognized"
+  when: " sd_required  and  sd_fstype  is not defined "
+   
+- name: Do we need an SD card
+  include: sdcard.yml
+  when: sd_required and not  sd_fstype  in ["ext2","ext3","ext4"]
+  
+- name: Even if not an XO1, if a SD card is present, it should be ext*
+  fail: "The SD card is not ext{2,3,4} format, please remove, or delete data, and retry"
+  when:  sd_required and not  sd_fstype  in ["ext2","ext3","ext4"]
+

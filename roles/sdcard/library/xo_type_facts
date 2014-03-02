@@ -1,0 +1,44 @@
+#!/bin/bash
+# get the XO specific info
+set -x
+if [ -e /proc/device-tree/mfg-data/MN ];then
+	XO_VERSION=`cat /proc/device-tree/mfg-data/MN`
+	else
+	XO_VERSION="none"
+fi
+    # What kind of XO is this?
+    if [ -e /proc/device-tree/mfg-data/M# ];then 
+        MODEL=`cat /proc/device-tree/mfg-data/M#` 
+        case $MODEL in
+        "CL1" | "CL1A")
+            XOTYPE="XO1"
+            ;;
+         "CL1B" | "CL1C")
+            XOTYPE="XO1.5"
+            ;;
+         "CL2" | "CL2A")
+            XOTYPE="XO1.75"
+            ;;
+         "CL4" | "CL4A" | "CL4B" | "CL4C")
+            XOTYPE="XO4"
+            ;;
+         *)
+            XOTYPE=
+            ;;
+         esac
+    fi
+
+
+
+cat << EOF
+{
+    "changed": false,
+    "ansible_facts": {
+        "xo_facts_gathered": true,
+        "xo_version" : "$XO_VERSION",
+        "xo_model" : "$MODEL",
+        "xo_type" : "$XOTYPE"
+    }
+}
+EOF
+

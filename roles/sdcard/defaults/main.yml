@@ -1,0 +1,5 @@
+---
+# set up expectations for SD card
+sd_required: true
+sd_preferred_fs: ext4
+sd_swap: true  
