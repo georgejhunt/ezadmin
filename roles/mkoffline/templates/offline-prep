@@ -3,6 +3,7 @@
 # this script prepares an XO computer to accumulate rpms from online sources
 # It requires an USB drive
 # It requires a fresh install of the OS so that dependent rpms are captured.
+
 FEDORA=`rpm -q fedora-release|gawk 'BEGIN {FS="-";}{print $3}'`
 XSARCH=`uname -i`
 
@@ -79,3 +80,6 @@ else
     exit 1
 fi
 
+# for offline installs the minimum we'll expect is ansible, if other offline tools are
+#   required, just add package names to this install process to populate the cache
+yum install -y ansible

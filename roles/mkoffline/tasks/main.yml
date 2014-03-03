@@ -1,0 +1,21 @@
+
+- name: Install useful packages
+  yum: name={{ item }}
+       state=present
+  with_items:
+        - createrepo
+
+- name: put the scripts in sbin
+  template: src: offline-mkpkg
+            dest: /usr/local/sbin/offline-mkpkg
+            owner: root
+            group: root
+            mode: 0755
+
+
+- name: put the scripts in sbin
+  template: src: offline-prep
+            dest: /usr/local/sbin/offline-prep
+            owner: root
+            group: root
+            mode: 0755

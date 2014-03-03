@@ -1,9 +1,5 @@
-
 #!/bin/bash
-#
-# this file is copied to an offline install package.
-# It installs selected rpms from the localrepo and
-# then transfers control to additional optional install scripts.
+# copy just the rpms (not all the metadata) to the install package, and zip it up
 
 # during debug phase, see a trail, stop on error, stop on use of empty variable
 set -x -e -u
@@ -13,3 +9,25 @@ if [ "$(id -u)" != "0" ]; then
     echo "This script must be run as root" 1>&2
     exit 1
 fi
+
+# verify output directory exists
+mkdir -p /offline/package/local_repo
+
+# copy the rpms to the package
+cp -fr /var/cache/yum/*/*/*/packages/* /offline/local-repo
+
+# accept a package name as input parameter, default to "package"
+if [ $# -gt 1 ]; then
+    pkg=$1
+else
+    pkg="package"
+fi
+
+# make sure package name is unique, avoid collisions with sequence number
+seq=
+while [ -f $installdir/${pkg}i${seq}.zip ];do
+    sep=(($seq + 1))
+done
+
+# zip the package contents to the next higher directory
+zip -r #installdir/$pkg$seq.zip * 
