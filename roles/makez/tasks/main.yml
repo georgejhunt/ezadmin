@@ -6,6 +6,9 @@
         - vim-enhanced
         - firefox
         - gedit
+	    - man-pages 
+        - man-db 
+        - man 
 
 - name: Disable selinux -- always seems to get in the way
   selinux: state=disabled
