@@ -1,20 +1,20 @@
 ---
 - name: put the script in sbin to point to USB stick cache
-  template: src: offline-prep
-            dest: /usr/local/sbin/offline-prep
-            owner: root
-            group: root
-            mode: 0755
+  template: src=offline-prep
+            dest=/usr/local/sbin/offline-prep
+            owner=root
+            group=root
+            mode=0755
 
 - name: now execute the script just installed to bind mount the USB stick to /var/cache/yum
   command: /usr/local/sbin/offline-prep
 
 - name: put the script in sbin to copy rpms to package, and createrepo on them
-  template: src: offline-mkpkg
-            dest: /usr/local/sbin/offline-mkpkg
-            owner: root
-            group: root
-            mode: 0755
+  template: src=offline-mkpkg
+            dest=/usr/local/sbin/offline-mkpkg
+            owner=root
+            group=root
+            mode=0755
 
 - name: Install useful packages
   yum: name={{ item }}

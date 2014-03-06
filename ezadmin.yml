@@ -6,6 +6,7 @@
     - weakpw: 12setup
   roles:
 #      - { role: makez, tags: ['makez'] }
+      - { role: mkoffline, tags: ['mkoffline'] }
       - { role: access, tags: ['access'] }
       - { role: vnc, tags: ['vnc'] }
       - { role: openvpn, tags: ['openvpn'] }
