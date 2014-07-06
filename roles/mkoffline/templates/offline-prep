@@ -7,12 +7,19 @@
 FEDORA=`rpm -q fedora-release|gawk 'BEGIN {FS="-";}{print $3}'`
 XSARCH=`uname -i`
 
-# during debug phase, see a trail, stop on error, stop on use of empty variable
-set -x -e -u
+# during debug phase
+set -x  
 
 # Make sure only root can run our script
 if [ "$(id -u)" != "0" ]; then
     echo "This script must be run as root" 1>&2
+    exit 1
+fi
+
+# issue appropriate error message is we are not online
+ping -c 3 8.8.8.8
+if [ $? ne 0 ];then
+    echo "This part of the Offline install must be done ON line"
     exit 1
 fi
 
@@ -23,9 +30,12 @@ sed -i -e 's/keepcache=0/keepcache=1/' /etc/yum.conf
 usbkey=""
 for parts in `ls /dev/sd*1`; do
     if [ x$parts != 'x' ];then
-        maybe=`ls -la /sys/class/block/ | grep usb | gawk '{print 9}'`
+        maybe=`ls -la /sys/class/block/ | grep usb | gawk '{print $9}'`
         if ! [ -z "$maybe" ];then
             usbkey=`findmnt -n -o TARGET -S $parts`
+            if [ ! -z "$usbkey" ];then
+               umount "$usbkey"
+            fi
             dev="$parts"
         else
             echo "no USB drive found. Please correct and rerun $0"
@@ -49,36 +59,11 @@ fi
 echo "INFO using /offline/local-cache for yum cache"
 mount --bind /offline/local-cache /var/cache/yum
 
-# following ensures $XSARCH/$FEDORA on fresh usbkey
-# update the online metadata from previous runs
-# and confirms available repos
-$yum_cmd repolist
-
 # convert uname -i to match what yum uses
 if [ $XSARCH = "armv7l" ];then
     XSARCH=armhfp
 fi
 
-# confirm we have a repo to use
-if [ -d /var/cache/yum/$XSARCH/$FEDORA/repodata ];then
-    # the sub-directories hold online-repo cache
-    # we use the top level to hold the offline repo 
-    # sum of all the cached rpms held
-
-    cat << EOF > /tmp/yum.conf
-[usb-media]
-name=usb-media
-baseurl=file://"$usbkey"/local-cache/\$basearch/\$releasever
-enabled=1
-gpgcheck=0
-cost=100
-
-EOF
-
-else
-    echo "Failed to set up local cache. Pleae correct and rerun $0
-    exit 1
-fi
 
 # for offline installs the minimum we'll expect is ansible, if other offline tools are
 #   required, just add package names to this install process to populate the cache
