@@ -4,11 +4,8 @@
   with_items:
         - vim-X11
         - vim-enhanced
-        - firefox
+#        - firefox
         - gedit
-	    - man-pages 
-        - man-db 
-        - man 
 
 - name: Disable selinux -- always seems to get in the way
   selinux: state=disabled
@@ -19,9 +16,11 @@
             src=bashrc_xs.sh
             owner=root
             mode=0644
+  when: false
 
 - name: Add systemwide alias for enhanced vim in text mode (enables clipboard)
   lineinfile: dest=/etc/profile.d/bashrc_xs.sh
               regexp='^alias v='
               line='alias vi="gvim -v "'
               state=present
+  when: false

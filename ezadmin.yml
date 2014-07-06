@@ -2,10 +2,11 @@
 - hosts: all
   sudo: yes
   vars:
-    - weakuser: setup
-    - weakpw: 12setup
+# the following create a default non-privileged user
+    - weakuser: xsce-admin
+    - weakpw: 12admin
   roles:
-#      - { role: makez, tags: ['makez'] }
+      - { role: makez, tags: ['makez'] }
       - { role: access, tags: ['access'] }
       - { role: vnc, tags: ['vnc'] }
       - { role: openvpn, tags: ['openvpn'] }
