@@ -22,7 +22,7 @@
 
 - name: Install the config file for vnc
   template: backup=yes
-            dest=/home/setup/.vnc/xstartup
+            dest=/home/{{ weakuser }}/.vnc/xstartup
             src=xstartup
             owner={{ weakuser }}
             mode=0755
