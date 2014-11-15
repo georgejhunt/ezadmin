@@ -1,0 +1,39 @@
+#!/bin/bash -x
+# script to copy relevent information to the vpn server
+# called once an hour by crontab
+
+VPNSERVER=5.5.0.1
+DEPLOYNAME=standres
+
+function skip_ifrecent {
+RECENT_CHECK='-daystart -mtime 0' 
+if [ `find ~/$DEPLOYNAME/xfer-done $RECENT_CHECK 2>/dev/null` ];then
+exit 0
+fi
+}
+
+function skip_ifoffline {
+  ping -c 3 -w 3 $VPNSERVER
+  if [ $? -ne 0 ]; then
+    exit 0
+  fi
+}
+
+function cpy_pwrlogs_ifxo {
+if [ -f /proc/device-tree/mfg-data/MN ]; then
+    rsync -r /home/olpc/power-logs site@5.5.0.1:/home/site/$DEPLOYNAME
+fi
+}
+
+mkdir -p ~/$DEPLOYNAME
+
+skip_ifoffline
+skip_ifrecent
+
+cpy_pwrlogs_ifxo
+
+vnstat -d > ~/$DEPLOYNAME/daily_vnstat
+date > ~/$DEPLOYNAME/last_update
+rsync  ~/$DEPLOYNAME/* site@5.5.0.1:/home/site/$DEPLOYNAME/
+
+touch ~/$DEPLOYNAME/xfer-done
