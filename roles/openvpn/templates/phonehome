@@ -7,7 +7,7 @@ DEPLOYNAME=standres
 
 function skip_ifrecent {
 RECENT_CHECK='-daystart -mtime 0' 
-if [ `find ~/$DEPLOYNAME/xfer-done $RECENT_CHECK 2>/dev/null` ];then
+if [ `find ~/$DEPLOYNAME/xfer-done.txt $RECENT_CHECK 2>/dev/null` ];then
 exit 0
 fi
 }
@@ -21,7 +21,7 @@ function skip_ifoffline {
 
 function cpy_pwrlogs_ifxo {
 if [ -f /proc/device-tree/mfg-data/MN ]; then
-    rsync -r /home/olpc/power-logs site@5.5.0.1:/home/site/$DEPLOYNAME
+    rsync -rp /home/olpc/power-logs site@5.5.0.1:/home/site/$DEPLOYNAME
 fi
 }
 
@@ -32,8 +32,8 @@ skip_ifrecent
 
 cpy_pwrlogs_ifxo
 
-vnstat -d > ~/$DEPLOYNAME/daily_vnstat
-date > ~/$DEPLOYNAME/last_update
-rsync  ~/$DEPLOYNAME/* site@5.5.0.1:/home/site/$DEPLOYNAME/
+vnstat -d > ~/$DEPLOYNAME/daily_vnstat.txt
+date > ~/$DEPLOYNAME/last_update.txt
+rsync -rp ~/$DEPLOYNAME/* site@5.5.0.1:/home/site/$DEPLOYNAME/
 
-touch ~/$DEPLOYNAME/xfer-done
+touch ~/$DEPLOYNAME/xfer-done.txt
