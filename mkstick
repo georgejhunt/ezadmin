@@ -1,9 +1,11 @@
 #!/bin/bash -x
 # reminder of what it takes to create a bootable mbr/efi tinycore appliance
-# most of this stolen from James Cameron's mktinycorxo at
+# most of this based on James Cameron's mktinycorxo at
 # http://dev.laptop.org/git/users/quozl/mktinycorexo
 
 COLOUR="yes"
+ARCH="TCZs_x86"
+#ARCH="TCZs_x86_64"
 
 # upstream versions, tiny core linux
 CORE_VERSION=5.x
@@ -27,8 +29,7 @@ done
 # build the cache
 mkdir -p cache
 mkdir -p cache/boot
-mkdir -p cache/lib/modules
-mkdir -p cache/TCZs_x86/tce/optional
+mkdir -p cache/TCZs_${ARCH}/tce/optional
 
 function p_error {
     if [ "$COLOUR" = "yes" ]; then
@@ -79,42 +80,60 @@ read dev
 dd if=/dev/zero of=$dev bs=1M count=50
 #dd if=/dev/zero of=$dev bs=1M count=4000
 read -p "press enter to continue, or <ctl-c> to stop"
-cat << EOF >gdisk 
-$dev
-2
+
+if [ $ARCH == "x86" ]; then
+cat << EOF | /usr/sbin/fdisk ${dev}
+d
+
+d
+
+d
+
+d
+
 n
+p
 1
 8064
-+20200M
-EF00
-n
-2
-
-+400M
-8300
-r
-h
-2
-n
-
-y
++2020M
+t
 83
-y
-n
+a
+
 w
-y
 EOF
+fi
+
+if [ $ARCH == "x86_64" ]; then
+cat << EOF | /usr/sbin/gdisk ${dev}
+d
+
+d
+
+d
+
+d
+
+n
+p
+1
+8064
++2020M
+t
+83
+a
+
+w
+EOF
+fi
 
 partprobe $dev
 read -p "press enter to continue, or <ctl-c> to stop"
-mkdosfs -F 32 -n EFI "${dev}2"
 mke2fs -t ext2 -L tinycore "${dev}1"
-mkdir -p /mnt/efi
 mkdir -p /mnt/tinycore
 
-mount ${dev}1 /mnt/efi
-mkdir -p /mnt/efi/EFI
-mkdir -p /mnt/efi/boot
+mount ${dev}1 /mnt/tinycore
+mkdir -p /mnt/tinycore/boot
  
 function get_initrd {
     flags="-q -c -P cache/boot/"
@@ -146,68 +165,55 @@ function get_initrd {
 
 get_initrd \
     http://repo.tinycorelinux.net/${CORE_VERSION} \
-    x86/release/distribution_files \
+    ${arch}/release/distribution_files \
     ${CORE_INITRD_X86}.gz
 get_initrd \
     http://repo.tinycorelinux.net/${CORE_VERSION} \
-    x86/release/distribution_files \
+    ${arch}/release/distribution_files \
     ${CORE_KERNEL_X86}
 
 
     # download tiny core extension
-    cat <<EOF > cache/TCZs_x86/tce/onboot.lst
+    cat <<EOF > cache/TCZs_${ARCH}/tce/onboot.lst
+appbrowser-cli.tcz
+openssh.tcz
 openssl-1.0.0.tcz
-libnl.tcz
-libiw.tcz
-libnl1.tcz
 tar.tcz
 parted.tcz
+gdisk.tcz
 rsync.tcz
-popt.tcz
-lynx.tcz
 gzip.tcz
-coreutils.tcz
-acl.tcz
-attr.tcz
-libattr.tcz
-gmp.tcz
-libcap.tcz
-diffutils.tcz
-findutils.tcz
-inetutils.tcz
+xz.tcz
 readline.tcz
 usb-utils.tcz
 libusb.tcz
-pci-utils.tcz
-libpci.tcz
-util-linux.tcz
-nano.tcz
 wget.tcz
 ncurses-common.tcz
 ncurses.tcz
 ncurses-utils.tcz
-openssh.tcz
+nano.tcz
+syslinux.tcz
 EOF
 
-p_begin "Checking x86 extensions ... "
+p_begin "Checking ${arch} extensions ... "
 base=http://repo.tinycorelinux.net/${CORE_VERSION}
-cache=cache/TCZs_x86/tce/optional/
+cache=cache/TCZs_${ARCH}/tce/optional/
 flags="-q -c -P $cache"
-for file in $(<cache/TCZs_x86/tce/onboot.lst); do
-    if [ ! -f cache/TCZs_x86/tce/optional/$file ]; then
-        wget ${flags} ${base}/x86/tcz/$file  \
-        wget ${flags} ${base}/x86/tcz/$file.md5.txt  \
-        wget ${flags} ${base}/x86/tcz/$file.dep  \
+for file in $(<cache/TCZs_${ARCH}/tce/onboot.lst); do
+    if [ ! -f cache/TCZs_${ARCH}/tce/optional/$file ]; then
+        wget ${flags} ${base}/${arch}/tcz/$file  \
+        wget ${flags} ${base}/${arch}/tcz/$file.md5.txt  \
+        wget ${flags} ${base}/${arch}/tcz/$file.dep  \
         p_end "got $file"
     else
         if [ $CACHE = no ]; then
             rm -f $cache/$file.md5.txt
-            wget ${flags} ${base}/x86/tcz/$file.md5.txt  
+            wget ${flags} ${base}/${arch}/tcz/$file.md5.txt  
             if [ "$(cat $cache/$file.md5.txt | cut -f 1 -d ' ')" \
                 != "$(md5sum $cache/$file | cut -f 1 -d ' ')" ]; then
-                rm -f cache/TCZs_x86/tce/optional/$file{,.dep}
-                wget ${flags} ${base}/x86/tcz/$file  \
-                wget ${flags} ${base}/x86/tcz/$file.dep \
+                rm -f cache/TCZs_${ARCH}/tce/optional/$file{,.dep}
+                wget ${flags} ${base}/${arch}/tcz/$file  \
+                wget ${flags} ${base}/${arch}/tcz/$file.dep \
                 p_end "updated $file"
             fi
         fi
@@ -215,4 +221,10 @@ for file in $(<cache/TCZs_x86/tce/onboot.lst); do
 done
 p_end "ok"
 
-rsync -r cache/boot/ /mnt/efi/boot/
+mkdir -p /mnt/tinycore/boot/extlinux
+extlinux --install /mnt/tinycore/boot/extlinux
+rsync cache/boot/* /mnt/tinycore/boot
+rsync /boot/extlinux/* /mnt/tinycore/boot/extlinux
+rsync -r cache/TCZs_${ARCH}/tce /mnt/tinycore/
+cp extlinux.conf /mnt/tinycore/boot/extlinux
+dd if=/usr/share/syslinux/mbr.bin of=${dev} bs=440 count=1 
