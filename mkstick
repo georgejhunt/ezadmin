@@ -1,0 +1,218 @@
+#!/bin/bash -x
+# reminder of what it takes to create a bootable mbr/efi tinycore appliance
+# most of this stolen from James Cameron's mktinycorxo at
+# http://dev.laptop.org/git/users/quozl/mktinycorexo
+
+COLOUR="yes"
+
+# upstream versions, tiny core linux
+CORE_VERSION=5.x
+
+# tinycore initramfs name
+CORE_INITRD_X86=core
+CORE_KERNEL_X86=vmlinuz
+CACHE=no
+
+# check that we have the needed tools
+for x in xzcat wget gdisk extlinux grub2-install mke2fs e2label mkdosfs; do
+    which $x
+    if [ $? -ne 0 ] ; then
+        echo -e "\\0033[1;34m"
+        echo "Please install $x and run the script again"
+        echo -en "\\0033[0;39m"
+        exit 1
+    fi
+done
+
+# build the cache
+mkdir -p cache
+mkdir -p cache/boot
+mkdir -p cache/lib/modules
+mkdir -p cache/TCZs_x86/tce/optional
+
+function p_error {
+    if [ "$COLOUR" = "yes" ]; then
+        echo -e "\e[1;91m$1\e[0;39m"
+    else
+        echo "$1"
+    fi
+}
+
+function p_warning {
+    if [ "$COLOUR" = "yes" ]; then
+        echo -e "\e[1;93m$1\e[0;39m"
+    else
+        echo "$1"
+    fi
+}
+
+function p_informational {
+    if [ "$COLOUR" = "yes" ]; then
+        echo -e "\e[1;92m$1\e[0;39m"
+    else
+        echo "$1"
+    fi
+}
+
+function p_begin {
+    if [ "$COLOUR" = "yes" ]; then
+        echo -ne "\e[1;96m$1\e[0;39m"
+    else
+        echo -n "$1"
+    fi
+}
+
+function p_end {
+    if [ "$COLOUR" = "yes" ]; then
+        echo -e "\e[1;92m$1\e[0;39m"
+    else
+        echo "$1"
+    fi
+}
+
+blkid
+echo  "\nEnter the device to destroy, and repartition (without partition #)"
+echo -n "i.e. /dev/sdb. (or hit ctl-c to abort):"
+read dev
+
+# if the non-data is cleared it might compress better
+dd if=/dev/zero of=$dev bs=1M count=50
+#dd if=/dev/zero of=$dev bs=1M count=4000
+read -p "press enter to continue, or <ctl-c> to stop"
+cat << EOF >gdisk 
+$dev
+2
+n
+1
+8064
++20200M
+EF00
+n
+2
+
++400M
+8300
+r
+h
+2
+n
+
+y
+83
+y
+n
+w
+y
+EOF
+
+partprobe $dev
+read -p "press enter to continue, or <ctl-c> to stop"
+mkdosfs -F 32 -n EFI "${dev}2"
+mke2fs -t ext2 -L tinycore "${dev}1"
+mkdir -p /mnt/efi
+mkdir -p /mnt/tinycore
+
+mount ${dev}1 /mnt/efi
+mkdir -p /mnt/efi/EFI
+mkdir -p /mnt/efi/boot
+ 
+function get_initrd {
+    flags="-q -c -P cache/boot/"
+    path=$1/$2
+    file=$3
+    checksum=$file.md5.txt
+
+    if [ ! -f cache/$file ]; then
+        p_begin "Downloading $file ... "
+        wget $flags $path/$file
+        p_end "ok"
+        return
+    fi
+
+    if [ $CACHE = no ]; then
+        p_begin "Checking if $file is up to date ... "
+        wget $flags $path/$checksum
+        if [ "$(cat cache/$checksum | cut -f 1 -d ' ')" \
+            != "$(md5sum cache/$file | cut -f 1 -d ' ')" ]; then
+            p_end "no"
+            rm -f cache/$file
+            p_begin "Downloading $file ... "
+            wget $flags $path/$file
+        fi
+        p_end "ok"
+        rm -f cache/$checksum
+    fi
+}
+
+get_initrd \
+    http://repo.tinycorelinux.net/${CORE_VERSION} \
+    x86/release/distribution_files \
+    ${CORE_INITRD_X86}.gz
+get_initrd \
+    http://repo.tinycorelinux.net/${CORE_VERSION} \
+    x86/release/distribution_files \
+    ${CORE_KERNEL_X86}
+
+
+    # download tiny core extension
+    cat <<EOF > cache/TCZs_x86/tce/onboot.lst
+openssl-1.0.0.tcz
+libnl.tcz
+libiw.tcz
+libnl1.tcz
+tar.tcz
+parted.tcz
+rsync.tcz
+popt.tcz
+lynx.tcz
+gzip.tcz
+coreutils.tcz
+acl.tcz
+attr.tcz
+libattr.tcz
+gmp.tcz
+libcap.tcz
+diffutils.tcz
+findutils.tcz
+inetutils.tcz
+readline.tcz
+usb-utils.tcz
+libusb.tcz
+pci-utils.tcz
+libpci.tcz
+util-linux.tcz
+nano.tcz
+wget.tcz
+ncurses-common.tcz
+ncurses.tcz
+ncurses-utils.tcz
+openssh.tcz
+EOF
+
+p_begin "Checking x86 extensions ... "
+base=http://repo.tinycorelinux.net/${CORE_VERSION}
+cache=cache/TCZs_x86/tce/optional/
+flags="-q -c -P $cache"
+for file in $(<cache/TCZs_x86/tce/onboot.lst); do
+    if [ ! -f cache/TCZs_x86/tce/optional/$file ]; then
+        wget ${flags} ${base}/x86/tcz/$file  \
+        wget ${flags} ${base}/x86/tcz/$file.md5.txt  \
+        wget ${flags} ${base}/x86/tcz/$file.dep  \
+        p_end "got $file"
+    else
+        if [ $CACHE = no ]; then
+            rm -f $cache/$file.md5.txt
+            wget ${flags} ${base}/x86/tcz/$file.md5.txt  
+            if [ "$(cat $cache/$file.md5.txt | cut -f 1 -d ' ')" \
+                != "$(md5sum $cache/$file | cut -f 1 -d ' ')" ]; then
+                rm -f cache/TCZs_x86/tce/optional/$file{,.dep}
+                wget ${flags} ${base}/x86/tcz/$file  \
+                wget ${flags} ${base}/x86/tcz/$file.dep \
+                p_end "updated $file"
+            fi
+        fi
+    fi
+done
+p_end "ok"
+
+rsync -r cache/boot/ /mnt/efi/boot/
