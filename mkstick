@@ -4,7 +4,7 @@
 # http://dev.laptop.org/git/users/quozl/mktinycorexo
 
 COLOUR="yes"
-ARCH="TCZs_x86"
+ARCH="x86"
 #ARCH="TCZs_x86_64"
 
 # upstream versions, tiny core linux
@@ -165,11 +165,11 @@ function get_initrd {
 
 get_initrd \
     http://repo.tinycorelinux.net/${CORE_VERSION} \
-    ${arch}/release/distribution_files \
+    ${ARCH}/release/distribution_files \
     ${CORE_INITRD_X86}.gz
 get_initrd \
     http://repo.tinycorelinux.net/${CORE_VERSION} \
-    ${arch}/release/distribution_files \
+    ${ARCH}/release/distribution_files \
     ${CORE_KERNEL_X86}
 
 
@@ -193,27 +193,32 @@ ncurses.tcz
 ncurses-utils.tcz
 nano.tcz
 syslinux.tcz
+glib2.tcz
+expat2.tcz
+nss-mdns.tcz
+libdaemon.tcz
+avahi.tcz
 EOF
 
-p_begin "Checking ${arch} extensions ... "
+p_begin "Checking ${ARCH} extensions ... "
 base=http://repo.tinycorelinux.net/${CORE_VERSION}
 cache=cache/TCZs_${ARCH}/tce/optional/
 flags="-q -c -P $cache"
 for file in $(<cache/TCZs_${ARCH}/tce/onboot.lst); do
     if [ ! -f cache/TCZs_${ARCH}/tce/optional/$file ]; then
-        wget ${flags} ${base}/${arch}/tcz/$file  \
-        wget ${flags} ${base}/${arch}/tcz/$file.md5.txt  \
-        wget ${flags} ${base}/${arch}/tcz/$file.dep  \
+        wget ${flags} ${base}/${ARCH}/tcz/$file  \
+        wget ${flags} ${base}/${ARCH}/tcz/$file.md5.txt  \
+        wget ${flags} ${base}/${ARCH}/tcz/$file.dep  \
         p_end "got $file"
     else
         if [ $CACHE = no ]; then
             rm -f $cache/$file.md5.txt
-            wget ${flags} ${base}/${arch}/tcz/$file.md5.txt  
+            wget ${flags} ${base}/${ARCH}/tcz/$file.md5.txt  
             if [ "$(cat $cache/$file.md5.txt | cut -f 1 -d ' ')" \
                 != "$(md5sum $cache/$file | cut -f 1 -d ' ')" ]; then
                 rm -f cache/TCZs_${ARCH}/tce/optional/$file{,.dep}
-                wget ${flags} ${base}/${arch}/tcz/$file  \
-                wget ${flags} ${base}/${arch}/tcz/$file.dep \
+                wget ${flags} ${base}/${ARCH}/tcz/$file  \
+                wget ${flags} ${base}/${ARCH}/tcz/$file.dep \
                 p_end "updated $file"
             fi
         fi
@@ -226,5 +231,6 @@ extlinux --install /mnt/tinycore/boot/extlinux
 rsync cache/boot/* /mnt/tinycore/boot
 rsync /boot/extlinux/* /mnt/tinycore/boot/extlinux
 rsync -r cache/TCZs_${ARCH}/tce /mnt/tinycore/
+cp mydata.gz /mnt/tinycore/tce
 cp extlinux.conf /mnt/tinycore/boot/extlinux
 dd if=/usr/share/syslinux/mbr.bin of=${dev} bs=440 count=1 
