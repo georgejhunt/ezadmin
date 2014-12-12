@@ -5,14 +5,23 @@
 
 COLOUR="yes"
 ARCH="x86"
-#ARCH="TCZs_x86_64"
+#ARCH="x86_64"
+#PARTITION="efi"
+PARTITION="mbr"
+
+FC_VER="20"
+#FC_ARCH="i386"
+FC_ARCH="x86_64"
+FC_URL="mirrors.usc.edu/pub/linux/distributions/fedora/linux/releases/${FC_VER}/Fedora/${FC_ARCH}/os/isolinux/"
 
 # upstream versions, tiny core linux
 CORE_VERSION=5.x
 
 # tinycore initramfs name
-CORE_INITRD_X86=core
-CORE_KERNEL_X86=vmlinuz
+#CORE_INITRD_X86=core
+CORE_INITRD_X86=corepure64
+#CORE_KERNEL_X86=vmlinuz
+CORE_KERNEL_X86=vmlinuz64
 CACHE=no
 
 # check that we have the needed tools
@@ -26,10 +35,25 @@ for x in xzcat wget gdisk extlinux grub2-install mke2fs e2label mkdosfs; do
     fi
 done
 
+# verify that there is the correct USB drive installed
+blkid
+echo  "\nEnter the device to destroy, and repartition (without partition #)"
+echo -n "i.e. /dev/sdb. (or hit ctl-c to abort):"
+read dev
+
+# make sure our device is unmounted
+line=`mount |grep $dev | gawk '{print $1}'`
+while [ $? -eq 0 && "$line" != ""]; do
+	echo $line
+	umount $line
+	line=`mount |grep $dev | gawk '{print $1}'`
+done
+
 # build the cache
 mkdir -p cache
 mkdir -p cache/boot
 mkdir -p cache/TCZs_${ARCH}/tce/optional
+mkdir -p cache/target/syslinux
 
 function p_error {
     if [ "$COLOUR" = "yes" ]; then
@@ -71,17 +95,12 @@ function p_end {
     fi
 }
 
-blkid
-echo  "\nEnter the device to destroy, and repartition (without partition #)"
-echo -n "i.e. /dev/sdb. (or hit ctl-c to abort):"
-read dev
 
 # if the non-data is cleared it might compress better
-dd if=/dev/zero of=$dev bs=1M count=50
+dd if=/dev/zero of=$dev bs=1M count=100
 #dd if=/dev/zero of=$dev bs=1M count=4000
-read -p "press enter to continue, or <ctl-c> to stop"
 
-if [ $ARCH == "x86" ]; then
+if [ $PARTITION == "mbr" ]; then
 cat << EOF | /usr/sbin/fdisk ${dev}
 d
 
@@ -104,7 +123,7 @@ w
 EOF
 fi
 
-if [ $ARCH == "x86_64" ]; then
+if [ $PARTITION == "efi" ]; then
 cat << EOF | /usr/sbin/gdisk ${dev}
 d
 
@@ -128,7 +147,6 @@ EOF
 fi
 
 partprobe $dev
-read -p "press enter to continue, or <ctl-c> to stop"
 mke2fs -t ext2 -L tinycore "${dev}1"
 mkdir -p /mnt/tinycore
 
@@ -176,28 +194,33 @@ get_initrd \
     # download tiny core extension
     cat <<EOF > cache/TCZs_${ARCH}/tce/onboot.lst
 appbrowser-cli.tcz
-openssh.tcz
-openssl-1.0.0.tcz
-tar.tcz
-parted.tcz
+avahi.tcz
+expat2.tcz
+gcc_libs.tcz
 gdisk.tcz
-rsync.tcz
+glib2.tcz
 gzip.tcz
-xz.tcz
-readline.tcz
-usb-utils.tcz
+libdaemon.tcz
+libavahi.tcz
+libffi.tcz
+libnl.tcz
 libusb.tcz
-wget.tcz
+nano.tcz
 ncurses-common.tcz
 ncurses.tcz
 ncurses-utils.tcz
-nano.tcz
-syslinux.tcz
-glib2.tcz
-expat2.tcz
 nss-mdns.tcz
-libdaemon.tcz
-avahi.tcz
+openssh.tcz
+openssl-1.0.0.tcz
+parted.tcz
+readline.tcz
+rsync.tcz
+syslinux.tcz
+tar.tcz
+tree.tcz
+usb-utils.tcz
+wget.tcz
+xz.tcz
 EOF
 
 p_begin "Checking ${ARCH} extensions ... "
@@ -231,6 +254,9 @@ extlinux --install /mnt/tinycore/boot/extlinux
 rsync cache/boot/* /mnt/tinycore/boot
 rsync /boot/extlinux/* /mnt/tinycore/boot/extlinux
 rsync -r cache/TCZs_${ARCH}/tce /mnt/tinycore/
-cp mydata.gz /mnt/tinycore/tce
-cp extlinux.conf /mnt/tinycore/boot/extlinux
+if [ "$ARCH" == "x86" ]; then
+	cp extlinux.conf /mnt/tinycore/boot/extlinux
+else
+	cp extlinux64.conf /mnt/tinycore/boot/extlinux/extlinux.conf
+fi
 dd if=/usr/share/syslinux/mbr.bin of=${dev} bs=440 count=1 

@@ -1,0 +1,31 @@
+#!/bin/bash 
+# bring the persistent data into the cache
+
+ARCH="x86"
+
+# verify that there is a USB drive installed
+dev=""
+mkdir -p usb
+maybe=`ls -la /sys/class/block/ | grep usb | gawk '{print $9}'`
+if ! [ -z "$maybe" ];then
+    for token in $maybe; do
+	mount /dev/${token} ./usb > /dev/null 2&>1
+	if [ $? -eq 0 ]; then
+	   if [ -f ./usb/tce/mydata.tgz ]; then
+              dev=/dev/${token}
+	      break
+	   fi
+	fi 
+    done
+else
+    echo "no USB drive found. Please correct and rerun $0"
+    exit 1
+fi
+if [ -z $dev ]; then
+   exit 1
+fi
+# go grab the data
+mkdir -p cache/TCZs_${ARCH}/tce/optional
+cp ./usb/tce/mydata.tgz cache/TCZs_${ARCH}/tce
+umount usb
+rmdir usb
