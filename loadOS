@@ -6,6 +6,8 @@ efi=`grep -w efi /proc/cmdline`
 mbr=`grep -w mbr /proc/cmdline`
 i386=`grep -w i386 /proc/cmdline`
 x86_64=`grep -w x86_64 /proc/cmdline`
+#installdir=$(cd `dirname ${0}`; pwd)
+curdir=`pwd`
 
 # wipe out the partition table
 #if [ -d /mnt/sdb1/tce ];then
@@ -52,29 +54,29 @@ mount /dev/sda1 /mnt/sda1
 mount /dev/sda2 /mnt/sda2
 mount /dev/sda3 /mnt/sda3
 
+# create the mbr directory framework
+  until [ `cat /proc/mounts | grep sda1` ]; do sleep .25; done
+  mkdir -p /mnt/sda1/boot/extlinux
+  extlinux --install /mnt/sda1/boot/extlinux
+  # installing mbr does not affect uefi boot, because uefi uses firmware
+
 # do the things based on machine width
 if [ ! -z "$i386" ];then
-  mkdir -p /mnt/sda1/boot/extlinux
-  extlinux /mnt/sda1/boot/extlinux
   cp /mnt/sdb1/target/i386/vmlinuz /mnt/sda1/boot
   cp /mnt/sdb1/target/i386/initrd.img /mnt/sda1/boot
-  pushd /mnt/sda2/
+  cd /mnt/sda2/
   tar xf /mnt/sdb1/target/rootfs.tgz
-  popd
+  cd $curdir
 fi
 
 if [ ! -z "$x86_64" ];then
   cp /mnt/sdb1/target/x86_64/vmlinuz /mnt/sda1/boot
   cp /mnt/sdb1/target/x86_64/initrd.img /mnt/sda1/boot
-  pushd /mnt/sda2/
+  cd /mnt/sda2/
   tar xf /mnt/sdb1/target/x86_64/rootfs.tgz
-  popd
+  cd $curdir 
 fi
 
-if [ ! -z "$efi" ];then
-  mkdir -p /mnt/sda1/boot/extlinux
-  extlinux /mnt/sda1/boot/extlinux
-fi
 cp /mnt/sdb1/target/extlinux.conf /mnt/sda1/boot/extlinux/extlinux.conf
 
 #create mount poins for the partitions
@@ -88,6 +90,8 @@ cat << EOF > /mnt/sda2/etc/fstab
 /dev/sda3	/library	ext4	defaults	0	0
 EOF
 
+# clear the root password
+cp /mnt/sdb1/target/passwd /mnt/sda2/etc/passwd
 
 
 
