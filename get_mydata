@@ -27,5 +27,7 @@ fi
 # go grab the data
 mkdir -p cache/TCZs_${ARCH}/tce/optional
 cp ./usb/tce/mydata.tgz cache/TCZs_${ARCH}/tce
+cp ./usb/loados cache/TCZs_${ARCH}/tce
+
 umount usb
 rmdir usb

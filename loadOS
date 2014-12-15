@@ -1,0 +1,59 @@
+#!/bin/sh
+# tinycore script to partition, and load the OS for XSCE
+
+# first look for command line flags 
+efi=`grep -qw efi /proc/commandline`
+mbr=`grep -qw mbr /proc/commandline`
+x86=`grep -qw x86 /proc/commandline`
+x86_64=`grep -qw x86_64 /proc/commandline`
+
+cat << EOF > fdisk /dev/sda
+d
+1
+d
+2
+d
+3
+d
+4
+n
+p
+1
+
++500M
+n
+p
+2
+
++5G
+n
+
+a
+1
+t
+1
+b
+w
+EOF
+partprobe /dev/sda
+mkdosfs -F 32 -n boot /dev/sda1
+mkfs.ext4 -L rootfs /dev/sda2
+mkfs.ext4 -L library /dev/sda3
+
+mount /dev/sda1 /mnt/sda1
+mount /dev/sda2 /mnt/sda2
+mount /dev/sda3 /mnt/sda3
+
+# do the things based on machine width
+if [ ! -z "$x86" ];then
+  mkdir -p /mnt/sda1/boot/extlinux
+  extlinux /mnt/sda1/boot/extlinux
+  cp /mnt/sdb1/target/x86/vmlinuz /mnt/sda1/boot
+  cp /mnt/sdb1/target/x86/initrd.img /mnt/sda1/boot
+  pushd /mnt/sda2/
+  tar xJf /mnt/sdb1/target/rootfs.tgz
+  popd
+fi
+
+
+
