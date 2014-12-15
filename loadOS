@@ -4,7 +4,7 @@
 # first look for command line flags 
 efi=`grep -qw efi /proc/commandline`
 mbr=`grep -qw mbr /proc/commandline`
-x86=`grep -qw x86 /proc/commandline`
+x86=`grep -qw i386 /proc/commandline`
 x86_64=`grep -qw x86_64 /proc/commandline`
 
 # wipe out the partition table
@@ -55,16 +55,16 @@ mount /dev/sda3 /mnt/sda3
 if [ ! -z "$x86" ];then
   mkdir -p /mnt/sda1/boot/extlinux
   extlinux /mnt/sda1/boot/extlinux
-  cp /mnt/sdb1/target/x86/vmlinuz /mnt/sda1/boot
-  cp /mnt/sdb1/target/x86/initrd.img /mnt/sda1/boot
+  cp /mnt/sdb1/target/i386/vmlinuz /mnt/sda1/boot
+  cp /mnt/sdb1/target/i386/initrd.img /mnt/sda1/boot
   pushd /mnt/sda2/
   tar xf /mnt/sdb1/target/rootfs.tgz
   popd
 fi
 
 if [ ! -z "$x86_64" ];then
-  cp /mnt/sdb1/target/x86/vmlinuz /mnt/sda1/boot
-  cp /mnt/sdb1/target/x86/initrd.img /mnt/sda1/boot
+  cp /mnt/sdb1/target/x86_64/vmlinuz /mnt/sda1/boot
+  cp /mnt/sdb1/target/x86_64/initrd.img /mnt/sda1/boot
   pushd /mnt/sda2/
   tar xf /mnt/sdb1/target/rootfs.tgz
   popd
