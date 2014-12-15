@@ -314,3 +314,4 @@ mkdir -p /mnt/tinycore/target/i386
 mkdir -p /mnt/tinycore/target/x86_64
 cp -r cache/target/${FC_VER}/i386/* /mnt/tinycore/target/i386
 cp -r cache/target/${FC_VER}/x86_64/* /mnt/tinycore/target/x86_64
+cp loadOS /mnt/tinycore/target

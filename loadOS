@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 # tinycore script to partition, and load the OS for XSCE
 
 # first look for command line flags 
@@ -7,7 +7,11 @@ mbr=`grep -qw mbr /proc/commandline`
 x86=`grep -qw x86 /proc/commandline`
 x86_64=`grep -qw x86_64 /proc/commandline`
 
-cat << EOF > fdisk /dev/sda
+# wipe out the partition table
+#if [ -d /mnt/sdb1/tce ];then
+#	dd ip=/dev/zero of=/dev/sda bs=512 count=1
+#fi
+cat << EOF | fdisk /dev/sda
 d
 1
 d
@@ -27,6 +31,9 @@ p
 
 +5G
 n
+p
+3
+
 
 a
 1
@@ -51,9 +58,23 @@ if [ ! -z "$x86" ];then
   cp /mnt/sdb1/target/x86/vmlinuz /mnt/sda1/boot
   cp /mnt/sdb1/target/x86/initrd.img /mnt/sda1/boot
   pushd /mnt/sda2/
-  tar xJf /mnt/sdb1/target/rootfs.tgz
+  tar xf /mnt/sdb1/target/rootfs.tgz
   popd
 fi
 
+if [ ! -z "$x86_64" ];then
+  cp /mnt/sdb1/target/x86/vmlinuz /mnt/sda1/boot
+  cp /mnt/sdb1/target/x86/initrd.img /mnt/sda1/boot
+  pushd /mnt/sda2/
+  tar xf /mnt/sdb1/target/rootfs.tgz
+  popd
+fi
+
+if [ ! -z "$efi" ];then
+  mkdir -p /mnt/sda1/boot/extlinux
+  extlinux /mnt/sda1/boot/extlinux
+fi
+cp /mnt/sdb1/target/x
+e
 
 
