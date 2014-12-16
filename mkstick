@@ -314,5 +314,9 @@ mkdir -p /mnt/tinycore/target/i386
 mkdir -p /mnt/tinycore/target/x86_64
 cp -r cache/target/${FC_VER}/i386/* /mnt/tinycore/target/i386
 cp -r cache/target/${FC_VER}/x86_64/* /mnt/tinycore/target/x86_64
+
+# and the generic config files
 cp loadOS /mnt/tinycore/target
 cp passwd /mnt/tinycore/target
+cp extlinux.conf.target /mnt/tinycore/target/extlinux.conf
+

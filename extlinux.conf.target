@@ -1,0 +1,5 @@
+#default menu.c32
+default verify
+label verify that mbr loader is working
+kernel ../vmlinuz
+append  initrd=../initrd.img root=LABEL=rootfs console=tty0
