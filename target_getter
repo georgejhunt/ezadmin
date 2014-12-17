@@ -1,0 +1,16 @@
+#!/bin/bash -x
+# runs on TinyCore, gets the rootfs and boot from minimal OS install to stick
+ARCH=`uname -p`
+VER="20"
+if [ ! `id -u` eq 0 ];then
+	mkdir -p /mnt/sdb1/os/$ARCH
+	mount /dev/sda5 /mnt/sda5
+	cd /mnt/sda5
+	tar czf /mnt/sdb1/os/$ARCH/rootfs.tgz *
+	mount /dev/sda2 /mnt/sda2
+	cd /mnt/sda2
+	tar czf /mnt/sdb1/os/$ARCH/boot.tgz *
+else
+	mount /dev/sdb1 /mnt
+	cp -r /mnt/os/* cache/targed/$VER/
+fi

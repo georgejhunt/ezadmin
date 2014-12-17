@@ -4,7 +4,7 @@
 # first look for command line flags 
 efi=`grep -w efi /proc/cmdline`
 mbr=`grep -w mbr /proc/cmdline`
-i386=`grep -w i386 /proc/cmdline`
+i686=`grep -w i686 /proc/cmdline`
 x86_64=`grep -w x86_64 /proc/cmdline`
 #installdir=$(cd `dirname ${0}`; pwd)
 curdir=`pwd`
@@ -60,11 +60,11 @@ mount /dev/sda3 /mnt/sda3
   # installing mbr does not affect uefi boot, because uefi uses firmware
 
 # do the things based on machine width
-if [ ! -z "$i386" ];then
-  cp /mnt/sdb1/target/i386/vmlinuz /mnt/sda1/
-  cp /mnt/sdb1/target/i386/initrd.img /mnt/sda1/
+if [ ! -z "$i686" ];then
+  cp /mnt/sdb1/target/i686/vmlinuz /mnt/sda1/
+  cp /mnt/sdb1/target/i686/initrd.img /mnt/sda1/
   cd /mnt/sda2/
-  tar xf /mnt/sdb1/target/i386/rootfs.tgz
+  tar xf /mnt/sdb1/target/i686/rootfs.tgz
   cd $curdir
 fi
 
@@ -86,7 +86,7 @@ mkdir -p /mnt/sda2/library
 # create a fstab
 cat << EOF > /mnt/sda2/etc/fstab
 /dev/sda2	/	ext4	defaults	0	1
-/dev/sda1	/boot	ext4	defaults	0	0
+/dev/sda1	/boot	ext4	defaults,nofail	0	0
 /dev/sda3	/library	ext4	defaults	0	2
 EOF
 

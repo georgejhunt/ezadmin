@@ -10,9 +10,10 @@ ARCH="x86"
 PARTITION="mbr"
 
 FC_VER="20"
-#FC_ARCH="i386"
+#FC_ARCH="i686"
 FC_ARCH="x86_64"
-FC_URL="mirrors.usc.edu/pub/linux/distributions/fedora/linux/releases/${FC_VER}/Fedora/${FC_ARCH}/os/isolinux/"
+FC_URL="mirrors.usc.edu/pub/linux/distributions/fedora/linux/releases/${FC_VER}/Fedora/${FC_ARCH}/iso/"
+UK_URL="download.unleashkids.org/xsce/downloads/"
 
 # upstream versions, tiny core linux
 CORE_VERSION=5.x
@@ -23,6 +24,7 @@ CORE_INITRD_X86=corepure64
 #CORE_KERNEL_X86=vmlinuz
 CORE_KERNEL_X86=vmlinuz64
 CACHE=no
+CURDIR=`pwd`
 
 # check that we have the needed tools
 for x in xzcat wget gdisk extlinux grub2-install mke2fs e2label mkdosfs; do
@@ -114,7 +116,7 @@ n
 p
 1
 8064
-+2020M
++4020M
 t
 83
 a
@@ -252,7 +254,10 @@ done
 p_end "ok"
 
 mkdir -p /mnt/tinycore/boot/extlinux
+cp /usr/share/syslinux/menu.c32 /mnt/tinycore/boot/extlinux
 extlinux --install /mnt/tinycore/boot/extlinux
+
+# copy over the downloaded stuff
 rsync cache/boot/* /mnt/tinycore/boot
 rsync /boot/extlinux/* /mnt/tinycore/boot/extlinux
 rsync -r cache/TCZs_${ARCH}/tce /mnt/tinycore/
@@ -267,52 +272,32 @@ dd if=/usr/share/syslinux/mbr.bin of=${dev} bs=440 count=1
 
 
 function get_rootfs {
-    # rootfs is in a squashfs in the /boot/LiveOS folder of boot.iso
     FC_ARCH=$1
     mkdir -p cache/target/${FC_VER}/${FC_ARCH}
     flags="-q -c "
-    file="boot.iso"
-    FC_URL="mirrors.usc.edu/pub/linux/distributions/fedora/linux/releases/${FC_VER}/Fedora/${FC_ARCH}/os/images/"
-    path=${FC_URL}$file
-    if [ ! -f cache/target/$FC_VER/$FC_ARCH/rootfs.tgz ]; then
+    file=$2
+    path=${UK_URL}$file
+    if [ ! -f cache/target/$FC_VER/$FC_ARCH/$file ]; then
         p_begin "Downloading $file ... "
-	pushd cache/target/$FC_VER/$FC_ARCH
-        	wget $flags $path
-		# the downloaded file is iso9660 format
-		mkdir -p bootiso
-		mount  boot.iso bootiso 
-		cp -f bootiso/LiveOS/squashfs.img squashfs.img
-		cp -f bootiso/isolinux/vmlinuz .
-		cp -f bootiso/isolinux/initrd.img .
-		cp -f bootiso/isolinux/isolinux.cfg .
-		unsquashfs -f squashfs.img
-		cd squashfs-root
-		# the rootfs is ext4 format as a single file
-		mkdir temp
-		mount LiveOS/rootfs.img ./temp
-		cd temp
-		tar Jcf ../../rootfs.tgz *
-		cd ../..
-		umount ./squashfs-root/temp
-		umount ./bootiso
-		rmdir  bootiso
-		rm -rf squashfs-root 
-		rm -f squashfs.img 
-		rm boot.iso
-	popd
+	local_cache=cache/target/$FC_VER/$FC_ARCH	
+	cd $local_cache
+		if [ ! -f $file ]; then
+        	   wget $flags $path
+		fi
+	cd $CURDIR
         p_end "ok"
         return
     fi
 
 }
 
-get_rootfs i386
+get_rootfs i686 i686fc20rootfs.tgz
 
-get_rootfs x86_64
+get_rootfs x86_64 x86_64rootfs.tgz
 
-mkdir -p /mnt/tinycore/target/i386
+mkdir -p /mnt/tinycore/target/i686
 mkdir -p /mnt/tinycore/target/x86_64
-cp -r cache/target/${FC_VER}/i386/* /mnt/tinycore/target/i386
+cp -r cache/target/${FC_VER}/i686/* /mnt/tinycore/target/i686
 cp -r cache/target/${FC_VER}/x86_64/* /mnt/tinycore/target/x86_64
 
 # and the generic config files
