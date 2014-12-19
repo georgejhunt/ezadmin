@@ -203,6 +203,8 @@ expat2.tcz
 gcc_libs.tcz
 gdisk.tcz
 glib2.tcz
+grub2.tcz
+grub2-efi.tcz
 gzip.tcz
 libdaemon.tcz
 libavahi.tcz
@@ -219,6 +221,7 @@ openssl-1.0.0.tcz
 parted.tcz
 readline.tcz
 rsync.tcz
+sed.tcz
 syslinux.tcz
 tar.tcz
 tree.tcz
@@ -293,7 +296,7 @@ function get_rootfs {
 
 get_rootfs i686 i686fc20rootfs.tgz
 
-get_rootfs x86_64 x86_64rootfs.tgz
+get_rootfs x86_64 x86_64fc20rootfs.tgz
 
 mkdir -p /mnt/tinycore/target/i686
 mkdir -p /mnt/tinycore/target/x86_64
