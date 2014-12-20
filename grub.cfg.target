@@ -1,0 +1,8 @@
+
+menuentry "Fedora 20 " {
+   insmod ext2
+   search --set=root --label rootfs --hint hd0,msdos2
+   linux /boot/vmlinuz root=LABEL=rootfs selinux=0
+   initrd /boot/initramfs
+}
+

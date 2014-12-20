@@ -79,21 +79,21 @@ if [ ! -z "$x86_64" ];then
   cd $curdir 
 fi
 
-cp /mnt/sdb1/target/extlinux.conf /mnt/sda1/extlinux/extlinux.conf
-cp /usr/local/share/syslinux/menu.c32 /mnt/sda1/extlinux/
+# following commented out but saved if need to go grub -> selinux again
+#cp /mnt/sdb1/target/extlinux.conf /mnt/sda1/extlinux/extlinux.conf
+#cp /usr/local/share/syslinux/menu.c32 /mnt/sda1/extlinux/
 
 #create mount points for the partitions
-mkdir -p /mnt/sda2/boot
+mkdir -p /mnt/sda2/boot/efi
 mkdir -p /mnt/sda2/library
 
 # create a fstab
 cat << EOF > /mnt/sda2/etc/fstab
 /dev/sda2	/	ext4	defaults	0	1
-/dev/sda1	/boot	ext4	defaults,nofail	0	0
+/dev/sda1	/boot/efi	ext4	defaults,nofail	0	0
 /dev/sda3	/library	ext4	defaults	0	2
 EOF
 
-# copy the kernel and ramfs to boot partition 
-cp -r /mnt/sda2/boot/* /mnt/sda1/boot
-
+grub-install --boot-directory=/mnt/sda1/boot /dev/sda
+cp /mnt/sdb1/target/grub.cfg.target /mnt/sda1/boot/grub/grub.cfg
 

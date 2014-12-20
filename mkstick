@@ -202,7 +202,6 @@ dbus.tcz
 expat2.tcz
 gcc_libs.tcz
 gdisk.tcz
-glib2.tcz
 grub2.tcz
 grub2-efi.tcz
 gzip.tcz
@@ -307,4 +306,4 @@ cp -r cache/target/${FC_VER}/x86_64/* /mnt/tinycore/target/x86_64
 cp loadOS /mnt/tinycore/target
 cp passwd /mnt/tinycore/target
 cp extlinux.conf.target /mnt/tinycore/target/extlinux.conf
-
+cp grub.cfg.target /mnt/tinycore/target/grub.cfg
