@@ -15,6 +15,7 @@ curdir=`pwd`
 #if [ -d /mnt/sdb1/tce ];then
 #	dd ip=/dev/zero of=/dev/sda bs=512 count=1
 #fi
+if [ ! -z $MBR ]; then
 cat << EOF | fdisk /dev/sda
 d
 1
@@ -46,6 +47,35 @@ t
 b
 w
 EOF
+else
+cat << EOF | gdisk /dev/sda
+d
+1
+d
+2
+d
+3
+d
+4
+n
+1
+
++500M
+ef00
+n
+2
+
++5G
+8300
+n
+3
+
+
+8300
+w
+y
+EOF
+fi
 partprobe /dev/sda
 until [ -e /dev/sda1 ]; do sleep .25; done
 mkdosfs -F 32 -n boot /dev/sda1
@@ -57,23 +87,23 @@ mount /dev/sda2 /mnt/sda2
 mount /dev/sda3 /mnt/sda3
 
 # create the mbr directory framework
-  mkdir -p /mnt/sda1/extlinux
-  extlinux --install /mnt/sda1/extlinux
+#  mkdir -p /mnt/sda1/extlinux
+#  extlinux --install /mnt/sda1/extlinux
   # installing mbr does not affect uefi boot, because uefi doesn't use it 
-  dd if=/usr/local/share/syslinux/mbr.bin of=/dev/sda bs=440 count=1
+#  dd if=/usr/local/share/syslinux/mbr.bin of=/dev/sda bs=440 count=1
 
 # do the things based on machine width
 if [ ! -z "$i686" ];then
-  cp /mnt/sdb1/target/i686/vmlinuz /mnt/sda1/
-  cp /mnt/sdb1/target/i686/initrd.img /mnt/sda1/
+#  cp /mnt/sdb1/target/i686/vmlinuz /mnt/sda1/
+#  cp /mnt/sdb1/target/i686/initrd.img /mnt/sda1/
   cd /mnt/sda2/
   tar xf /mnt/sdb1/target/i686/i686fc20rootfs.tgz
   cd $curdir
 fi
 
 if [ ! -z "$x86_64" ];then
-  cp /mnt/sdb1/target/x86_64/vmlinuz /mnt/sda1/
-  cp /mnt/sdb1/target/x86_64/initrd.img /mnt/sda1/
+#  cp /mnt/sdb1/target/x86_64/vmlinuz /mnt/sda1/
+#  cp /mnt/sdb1/target/x86_64/initrd.img /mnt/sda1/
   cd /mnt/sda2/
   tar xf /mnt/sdb1/target/x86_64/x86_64fc20rootfs.tgz
   cd $curdir 
@@ -95,5 +125,16 @@ cat << EOF > /mnt/sda2/etc/fstab
 EOF
 
 grub-install --boot-directory=/mnt/sda1/boot /dev/sda
-cp /mnt/sdb1/target/grub.cfg.target /mnt/sda1/boot/grub/grub.cfg
+cp /mnt/sdb1/target/grub.cfg /mnt/sda1/boot/grub/grub.cfg
+mkdir -p /mnt/sda1/EFI
+mkdir /home/tc/img
+mount /mnt/sdb1/target/x86_64/efiboot.img /home/tc/img
+cp -r /home/tc/img/* /mnt/sda1/EFI/
+
+# make symbolic links for the kernel, and initramfs
+kernel=`find /mnt/sda2/boot | grep vmlinuz-3`
+ln -sf /mnt/sda2/boot/$kernel /mnt/sda2/boot/vmlinuz
+
+initrd=`find /mnt/sda2/boot | grep initramfs-3`
+ln -sf /mnt/sda2/boot/$initrd /mnt/sda2/boot/initramfs
 

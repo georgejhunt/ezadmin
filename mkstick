@@ -12,7 +12,7 @@ PARTITION="mbr"
 FC_VER="20"
 #FC_ARCH="i686"
 FC_ARCH="x86_64"
-FC_URL="mirrors.usc.edu/pub/linux/distributions/fedora/linux/releases/${FC_VER}/Fedora/${FC_ARCH}/iso/"
+FC_URL="mirrors.usc.edu/pub/linux/distributions/fedora/linux/releases/${FC_VER}/Fedora/${FC_ARCH}/os/images/"
 UK_URL="download.unleashkids.org/xsce/downloads/"
 
 # upstream versions, tiny core linux
@@ -205,6 +205,7 @@ gdisk.tcz
 grub2.tcz
 grub2-efi.tcz
 gzip.tcz
+icu.tcz
 libdaemon.tcz
 libavahi.tcz
 libffi.tcz
@@ -218,6 +219,7 @@ nss-mdns.tcz
 openssh.tcz
 openssl-1.0.0.tcz
 parted.tcz
+popt.tcz
 readline.tcz
 rsync.tcz
 sed.tcz
@@ -296,6 +298,11 @@ function get_rootfs {
 get_rootfs i686 i686fc20rootfs.tgz
 
 get_rootfs x86_64 x86_64fc20rootfs.tgz
+
+# get the EFI tree from fedora
+cd cache/target/${FC_VER}/x86_64
+wget ${FC_URL}/efiboot.img
+cd $CURDIR
 
 mkdir -p /mnt/tinycore/target/i686
 mkdir -p /mnt/tinycore/target/x86_64
