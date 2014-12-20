@@ -314,3 +314,4 @@ cp loadOS /mnt/tinycore/target
 cp passwd /mnt/tinycore/target
 cp extlinux.conf.target /mnt/tinycore/target/extlinux.conf
 cp grub.cfg.target /mnt/tinycore/target/grub.cfg
+cp grub.cfg.target.efi /mnt/tinycore/target/grub.cfg.efi
