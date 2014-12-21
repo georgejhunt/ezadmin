@@ -12,10 +12,23 @@ INITRAMFS="initramfs-3.17.6-200.fc20.i686+PAE"
 curdir=`pwd`
 
 # wipe out the partition table
-#if [ -d /mnt/sdb1/tce ];then
-#	dd ip=/dev/zero of=/dev/sda bs=512 count=1
-#fi
-if [ ! -z $MBR ]; then
+if [ -d /mnt/sdb1/tce ];then
+	dd ip=/dev/zero of=/dev/sda bs=512 count=2
+fi
+if [ ! -z "$MBR" ]; then
+# for testing purposes we need to be able to delete a gpt and initialize
+#  as a mbr partition table. But only gdisk knows where gpt is 
+# First determine if current partition table is gpt
+gpt=`blkid /dev/sda | grep gpt`
+if [ ! -z "$gpt" ]; then
+cat << EOF | gdisk /dev/sda
+x
+z
+y
+y
+EOF
+fi
+
 cat << EOF | fdisk /dev/sda
 d
 1
@@ -124,26 +137,24 @@ cat << EOF > /mnt/sda2/etc/fstab
 /dev/sda3	/library	ext4	defaults	0	2
 EOF
 
-# following set up the mbr boot requirements
-grub-install --boot-directory=/mnt/sda1/boot /dev/sda
-cp /mnt/sdb1/target/grub.cfg /mnt/sda1/boot/grub/grub.cfg
-
-# following are attempting to set up EFI boot requirements
-mkdir -p /mnt/sda1/EFI
-mkdir /home/tc/img
-mount /mnt/sdb1/target/x86_64/efiboot.img /home/tc/img
-cp -r /home/tc/img/* /mnt/sda1/
-grub-install --target=i686-efi --efi-directory=/mnt/sda1 --bootloader-id=boot --boot-directory=/mnt/sda1/EFI--recheck 
-if [ ! -z $EFI ]; then
-cp /mnt/sdb1/target/grub.cfg /mnt/sda1/EFI/BOOT/grub.cfg
+# now install the grub mbr loader, or the grub EFI loader
+if [ ! -z "$MBR" ]; then 
+	# following set up the mbr boot requirements
+	grub-install --boot-directory=/mnt/sda1/boot /dev/sda
+	cp /mnt/sdb1/target/grub.cfg /mnt/sda1/boot/grub/grub.cfg
 else
-cp /mnt/sdb1/target/grub.cfg.efi /mnt/sda1/EFI/BOOT/grub.cfg
+	# following are attempting to set up EFI boot requirements
+	mkdir -p /mnt/sda1/EFI
+	mkdir /home/tc/img
+	mount /mnt/sdb1/target/x86_64/efiboot.img /home/tc/img
+	cp -r /home/tc/img/* /mnt/sda1/
+	grub-install --target=i386-efi --efi-directory=/mnt/sda1 --bootloader-id=boot --boot-directory=/mnt/sda1/EFI --recheck 
+	cp /mnt/sdb1/target/grub.cfg.efi /mnt/sda1/EFI/BOOT/grub.cfg
 fi
-
 # make symbolic links for the kernel, and initramfs
 kernel=`find /mnt/sda2/boot | grep vmlinuz-3`
-ln -sf ./$kernel /mnt/sda2/boot/vmlinuz
+ln -sf $(basename $kernel) /mnt/sda2/boot/vmlinuz
 
 initrd=`find /mnt/sda2/boot | grep initramfs-3`
-ln -sf ./$initrd /mnt/sda2/boot/initramfs
+ln -sf $(basename $initrd) /mnt/sda2/boot/initramfs
 

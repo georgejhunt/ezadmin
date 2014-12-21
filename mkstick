@@ -4,6 +4,7 @@
 # http://dev.laptop.org/git/users/quozl/mktinycorexo
 
 COLOUR="yes"
+# ARCH is the tinycore arch -- we'll do everything with i686
 ARCH="x86"
 #ARCH="x86_64"
 #PARTITION="efi"
@@ -264,6 +265,14 @@ extlinux --install /mnt/tinycore/boot/extlinux
 # copy over the downloaded stuff
 rsync cache/boot/* /mnt/tinycore/boot
 rsync /boot/extlinux/* /mnt/tinycore/boot/extlinux
+
+# get the persistent tinycore data to include in our package
+if [ ! -f cache/TCZs_${ARCH}/tce/mydata.tgz ];then
+   cache=cache/TCZs_${ARCH}/tce/
+   flags="-q -c -P $cache"
+   scp wget ${flags} ${UK_URL}/mydata.tgz
+fi
+
 rsync -r cache/TCZs_${ARCH}/tce /mnt/tinycore/
 if [ "$ARCH" == "x86" ]; then
 	cp extlinux.conf /mnt/tinycore/boot/extlinux
