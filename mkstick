@@ -310,7 +310,9 @@ get_rootfs x86_64 x86_64fc20rootfs.tgz
 
 # get the EFI tree from fedora
 cd cache/target/${FC_VER}/x86_64
-wget ${FC_URL}/efiboot.img
+if [ ! -f "${FC_URL}/efiboot.img" ]; then
+	wget ${FC_URL}/efiboot.img
+fi
 cd $CURDIR
 
 mkdir -p /mnt/tinycore/target/i686
